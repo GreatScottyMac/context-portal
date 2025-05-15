@@ -4,7 +4,7 @@
 .roomodes
 generate_mcp_yaml.py
 generate_mcp_yaml
-install_rooflow.sh
+install_rooflow.*
 system_prompt.md
 backup/
 mcp-reference/
@@ -13,7 +13,7 @@ projectBrief.md
 *.log
 conport_export/
 code-complexity-server/
-install_rooflow_conport.sh
+install_rooflow_conport.*
 conport_instructions_suggestions.md
 dev/
 
