@@ -1,14 +1,34 @@
-# Multi-Workspace Support Plan for ConPort
+# Dynamic Workspace Support Plan for ConPort
 
-This document outlines the plan to implement multi-workspace support in the `ConPort` MCP server, properly leveraging the MCP Roots capability.
+## Context and Feature Overview
+
+ConPort is an MCP (Model Context Protocol) server that provides AI assistants with tools to operate on codebases, documentation, and other project resources. 
+
+**Problem Statement**: Currently, developers working on multiple projects concurrently must:
+- Launch separate ConPort instances for each project
+- Restart the server when switching contexts
+- Maintain separate configurations for each workspace
+- Track which port/process corresponds to which project
+
+**Feature Solution**: Implement dynamic workspace support that allows a single ConPort server instance to operate on multiple workspaces and switch between them at runtime.
+
+## Benefits of Centralized Workspace Management
+
+The design uses centralized workspace state management rather than passing workspace_id parameters to individual tools. This approach offers several advantages:
+
+1. **Reduced API Surface Area**: Tools maintain cleaner signatures without redundant workspace parameters.
+
+2. **Consistent Context Management**: A central workspace resolver ensures all tools operate on the same workspace without synchronization issues.
+
+3. **Simplified Error Handling**: Centralizing workspace resolution consolidates error handling in one place rather than duplicating it across all tool implementations.
+
+4. **Reduced Implementation Overhead**: New tools automatically inherit workspace context without extra parameters.
+
+5. **Transport Agnosticism**: Adding workspace context through a header (HTTP) or tool (STDIO) works seamlessly without modifying individual tool signatures.
+
+6. **Cleaner Testing**: Tools can be tested in isolation without mocking workspace parameters.
 
 ## High-Level Design
-
-### Background and Context
-
-**Model Context Protocol (MCP)** is a standardized protocol that enables AI models and applications to interact with external tools, data sources, and resources. The protocol defines mechanisms for declaring capabilities and exchanging structured messages between clients and servers.
-
-**Roots Capability** is a specific MCP feature that enables clients to declare filesystem boundaries where servers can operate. This is a security-focused mechanism that provides context about which directories/files are accessible to the server.
 
 ### Design Goals and Principles
 
