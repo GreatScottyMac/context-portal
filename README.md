@@ -356,27 +356,6 @@ For a more in-depth understanding of ConPort's design, architecture, and advance
 
 Details on contributing to the ConPort project will be added here in the future.
 
-### Show Your Appreciation
-
-If you find ConPort useful and would like to show your appreciation, any small token is greatly valued and helps support further development. Thank you!
-
-<div align="left">
-  <table style="border: none; width: 100%;">
-    <tr style="border: none;">
-      <td style="border: none; padding: 10px; text-align: center; width: 33%;">
-        <img src="assets/images/paypal.png" alt="PayPal QR Code" height="50"><br>
-      </td>
-      <td style="border: none; padding: 10px; text-align: center; width: 33%;">
-        <img src="assets/images/cashapp.png" alt="Cash App QR Code" height="50"><br>
-      </td>
-      <td style="border: none; padding: 10px; text-align: center; width: 33%;">
-        <img src="assets/images/venmo.png" alt="Venmo QR Code" height="50"><br>
-      </td>
-    </tr>
-  </table>
-</div>
-
-You can also support the project by starring it on GitHub! ⭐
 
 ## License
 

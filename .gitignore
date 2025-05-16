@@ -5,6 +5,7 @@
 generate_mcp_yaml.py
 generate_mcp_yaml
 install_rooflow.*
+install_rooflow.*
 system_prompt.md
 backup/
 mcp-reference/
@@ -14,7 +15,6 @@ projectBrief.md
 conport_export/
 code-complexity-server/
 install_rooflow_conport.*
-conport_instructions_suggestions.md
 dev/
 
 # Byte-compiled / optimized / DLL files
