@@ -1,7 +1,7 @@
 import sys
 import uvicorn
 from fastapi import FastAPI
-import logging
+import logging.handlers
 import argparse
 import os
 from typing import Dict, Any, Optional, AsyncIterator, List, Annotated # Added AsyncIterator and List and Annotated
@@ -24,8 +24,17 @@ except ImportError:
     from src.context_portal_mcp.db import database, models
     from src.context_portal_mcp.core import exceptions
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-log = logging.getLogger(__name__)
+# Configure logging
+log_format = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO) # Default level for all handlers
+
+# Console handler
+console_handler = logging.StreamHandler(sys.stderr)
+console_handler.setFormatter(logging.Formatter(log_format))
+root_logger.addHandler(console_handler)
+
+log = logging.getLogger(__name__) # Get the module-specific logger
 
 # --- Lifespan Management for FastMCP ---
 @asynccontextmanager
@@ -785,9 +794,45 @@ def main_logic(sys_args=None):
         default="http",
         help="Server communication mode (default: http for FastMCP mounted app)"
     )
+    parser.add_argument(
+        "--log-file",
+        type=str,
+        default=None,
+        help="Path to a file where logs should be written. If not provided, logs go to stderr."
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level."
+    )
 
     args = parser.parse_args(args=sys_args)
     log.info(f"Parsed CLI args: {args}")
+
+    # Set the root logger level based on CLI argument
+    root_logger.setLevel(getattr(logging, args.log_level.upper()))
+
+    # Add file handler if log_file is specified
+    if args.log_file:
+        try:
+            # Ensure the directory exists
+            log_dir = os.path.dirname(args.log_file)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+
+            # Use RotatingFileHandler to prevent log files from growing indefinitely
+            file_handler = logging.handlers.RotatingFileHandler(
+                args.log_file,
+                maxBytes=10 * 1024 * 1024,  # 10 MB
+                backupCount=5              # Keep up to 5 backup files
+            )
+            file_handler.setFormatter(logging.Formatter(log_format))
+            root_logger.addHandler(file_handler)
+            log.info(f"Logging to file: {args.log_file}")
+        except Exception as e:
+            log.error(f"Failed to set up file logging to {args.log_file}: {e}")
 
     if args.mode == "http":
         log.info(f"Starting ConPort HTTP server (via FastMCP) on {args.host}:{args.port}")
