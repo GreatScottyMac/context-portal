@@ -4,7 +4,7 @@ from fastapi import FastAPI
 import logging
 import argparse
 import os
-from typing import Dict, Any, Optional, AsyncIterator, List, Annotated # Added AsyncIterator and List and Annotated
+from typing import Dict, Any, Optional, AsyncIterator, List, Annotated
 from datetime import datetime
 from contextlib import asynccontextmanager # Added
 
@@ -239,10 +239,12 @@ async def tool_log_progress(
         log.error(f"Error in log_progress handler: {e}")
         raise
     except ValueError as e: # Catch Pydantic validation errors
-        log.error(f"Validation error for log_progress: {e}. Args: workspace_id={workspace_id}, status='{status}'")
-        raise exceptions.ContextPortalError(f"Invalid arguments for log_progress: {e}")
+        # The original error 'e' from Pydantic contains detailed information.
+        detailed_error_message = str(e)
+        log.error(f"Validation error for log_progress: {detailed_error_message}. Args: workspace_id={workspace_id}, status='{status}', description_present={description is not None}, parent_id_present={parent_id is not None}, linked_item_type_present={linked_item_type is not None}, linked_item_id_present={linked_item_id is not None}")
+        raise exceptions.ContextPortalError(f"Invalid arguments for log_progress. Details: {detailed_error_message}")
     except Exception as e:
-        log.error(f"Error processing args for log_progress: {e}. Args: workspace_id={workspace_id}, status='{status}'")
+        log.error(f"Error processing args for log_progress: {e}. Args: workspace_id={workspace_id}, status='{status}', description_present={description is not None}, parent_id_present={parent_id is not None}, linked_item_type_present={linked_item_type is not None}, linked_item_id_present={linked_item_id is not None}")
         raise exceptions.ContextPortalError(f"Server error processing log_progress: {type(e).__name__}")
 
 @conport_mcp.tool(name="get_progress", description="Retrieves progress entries.")
@@ -811,18 +813,14 @@ def main_logic(sys_args=None):
 
             # CRITICAL CHECK: Prevent creating DB in server's own directory due to misconfiguration
             if effective_workspace_id and os.path.abspath(effective_workspace_id) == CONPORT_SERVER_ROOT_DIR:
-                error_msg = (
-                    f"CRITICAL ERROR: STDIO mode effective_workspace_id ('{effective_workspace_id}') "
-                    f"resolved to the ConPort server's own root directory ('{CONPORT_SERVER_ROOT_DIR}'). "
-                    "This is likely due to a client-side MCP configuration error where "
-                    "'--workspace_id' was not correctly resolved to your target project path, "
-                    "and no 'cwd' was set to the target project by the client. "
-                    "ConPort will NOT create a database within its own installation directory. "
-                    "Please correct your MCP client configuration to provide an absolute path "
-                    "for '--workspace_id' or ensure your client sets 'cwd' to your target project."
+                warning_msg = (
+                    f"WARNING: STDIO mode effective_workspace_id ('{effective_workspace_id}') resolved to the ConPort server's own root directory ('{CONPORT_SERVER_ROOT_DIR}'). "
+                    "This may be due to the client IDE not expanding a variable like '${workspaceFolder}' and falling back to the server's CWD. "
+                    "While this is not recommended for production, the server will proceed. "
+                    "Ensure this is intended, especially for development or if ConPort itself is the target project. "
+                    "A database will be created in this directory."
                 )
-                log.critical(error_msg)
-                sys.exit(1)
+                log.warning(warning_msg)
 
         try:
             # from src.context_portal_mcp.core.config import get_database_path # Import happens at module level
