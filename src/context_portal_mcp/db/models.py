@@ -44,6 +44,8 @@ class SystemPattern(BaseModel):
     name: str # Should be unique
     description: Optional[str] = None
     tags: Optional[List[str]] = Field(None, description="Optional tags for categorization")
+    timestamp_created: datetime = Field(default_factory=datetime.utcnow)
+    timestamp_updated: datetime = Field(default_factory=datetime.utcnow)
 
 class CustomData(BaseModel):
     """Model for the custom_data table."""
@@ -51,6 +53,8 @@ class CustomData(BaseModel):
     category: str
     key: str
     value: Any # Store arbitrary JSON data (SQLAlchemy handles JSON str conversion for DB)
+    timestamp_created: datetime = Field(default_factory=datetime.utcnow)
+    timestamp_updated: datetime = Field(default_factory=datetime.utcnow)
 
 # --- Context History Models ---
 

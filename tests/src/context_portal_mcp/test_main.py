@@ -273,3 +273,87 @@ async def test_tool_log_progress_success(mock_tool_logger, mock_handle_log_progr
 # Assertions for `test_main_logic_stdio_workspace_fallback_server_root_warning` are refined.
 # Assertions for logging in `tool_log_progress` tests verify the format from the previous subtask.
 # Added a success case test for `tool_log_progress` for completeness.
+
+# --- Tests for Dynamic Version Loading ---
+
+# To test the dynamic version loading, we need to be able to reload the main module
+# or trigger its version loading logic after patching importlib.metadata.
+# This can be tricky as the module-level CONPORT_VERSION is set on first import.
+# A common way is to put the version loading logic into a function that can be called,
+# or to use `importlib.reload`.
+
+# For simplicity, let's assume that if we patch `importlib.metadata` *before* the
+# `src.context_portal_mcp.main` module is first effectively loaded by a test run
+# (or by specifically reloading it), the patched value will be used.
+# Pytest might cache imports, so direct reload is often more reliable.
+
+# Option 1: Test by checking the version variable after "reloading" (or fresh import context for test)
+# This requires careful management of when `src.context_portal_mcp.main` is imported.
+# If it's imported at the top of this test file, CONPORT_VERSION is already set.
+
+# Option 2: Encapsulate version fetching in main.py into a function. (Requires code change in main.py)
+# def get_conport_version():
+# try:
+# return metadata.version("context-portal-mcp")
+# except metadata.PackageNotFoundError:
+# log.warning(...)
+# return "0.0.0-dev"
+# CONPORT_VERSION = get_conport_version()
+# Then we can patch metadata and call this function.
+
+# Given the current structure of main.py, where CONPORT_VERSION is a top-level variable,
+# testing its dynamic assignment requires ensuring the module is loaded *after* the patch is active.
+# This can be achieved by moving the import of `context_main` inside the test function
+# or using `importlib.reload`. `importlib.reload` is generally cleaner for this.
+
+import importlib
+
+@patch('src.context_portal_mcp.main.metadata.version')
+@patch('src.context_portal_mcp.main.log') # To check for warning log
+def test_conport_version_dynamic_loading_success(mock_log, mock_metadata_version):
+    """Test CONPORT_VERSION is set from importlib.metadata.version successfully."""
+    expected_version = "1.2.3-test"
+    mock_metadata_version.return_value = expected_version
+
+    # Reload main module to re-trigger CONPORT_VERSION assignment with the patch
+    # This is crucial because CONPORT_VERSION is set at module import time.
+    reloaded_main = importlib.reload(context_main)
+    
+    assert reloaded_main.CONPORT_VERSION == expected_version
+    mock_metadata_version.assert_called_once_with("context-portal-mcp")
+    mock_log.warning.assert_not_called() # No warning should be logged on success
+
+
+@patch('src.context_portal_mcp.main.metadata.version')
+@patch('src.context_portal_mcp.main.log')
+def test_conport_version_dynamic_loading_package_not_found(mock_log, mock_metadata_version):
+    """Test CONPORT_VERSION falls back to '0.0.0-dev' if PackageNotFoundError."""
+    mock_metadata_version.side_effect = importlib.metadata.PackageNotFoundError("Package not found")
+
+    reloaded_main = importlib.reload(context_main)
+
+    assert reloaded_main.CONPORT_VERSION == "0.0.0-dev"
+    mock_metadata_version.assert_called_once_with("context-portal-mcp")
+    mock_log.warning.assert_called_once_with(
+        "Package 'context-portal-mcp' not found. Using default version '0.0.0-dev' for CONPORT_VERSION."
+    )
+
+# The FastAPI app instance in main.py also uses CONPORT_VERSION.
+# We should also test that the app's version is updated.
+@patch('src.context_portal_mcp.main.metadata.version')
+def test_fastapi_app_uses_dynamic_version(mock_metadata_version):
+    expected_version = "2.0.0-dynamic"
+    mock_metadata_version.return_value = expected_version
+
+    # Reload main to ensure CONPORT_VERSION and app are re-initialized
+    reloaded_main = importlib.reload(context_main)
+    
+    assert reloaded_main.app.version == expected_version
+
+@patch('src.context_portal_mcp.main.metadata.version', side_effect=importlib.metadata.PackageNotFoundError)
+@patch('src.context_portal_mcp.main.log') # Suppress warning log in this specific test for FastAPI app
+def test_fastapi_app_uses_fallback_version(mock_log, mock_metadata_version_notfound):
+    # Reload main to ensure CONPORT_VERSION and app are re-initialized
+    reloaded_main = importlib.reload(context_main)
+    
+    assert reloaded_main.app.version == "0.0.0-dev"

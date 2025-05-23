@@ -282,13 +282,35 @@ def handle_update_progress(args: models.UpdateProgressArgs) -> Dict[str, Any]:
 
         if updated:
             # --- Update Vector Store ---
-            # Re-embedding on update requires fetching the full, updated entry from the DB
-            # to get the complete description and status for the vector.
-            # This requires a db.get_progress_entry_by_id function, which is not yet implemented.
-            # For now, we will skip re-embedding on update and log a warning.
-            # A future enhancement would be to implement db.get_progress_entry_by_id
-            # and then call vector_store_service.upsert_item_embedding here.
-            log.warning(f"Vector store update skipped for progress entry ID {args.progress_id} on update. Requires db.get_progress_entry_by_id for accurate re-embedding.")
+            # --- Update Vector Store ---
+            updated_entry = db.get_progress_entry_by_id(args.workspace_id, args.progress_id)
+            if updated_entry:
+                try:
+                    text_to_embed = f"Progress: {updated_entry.status} - {updated_entry.description}"
+                    vector = embedding_service.get_embedding(text_to_embed.strip())
+                    
+                    metadata_for_vector = {
+                        "conport_item_id": str(updated_entry.id),
+                        "conport_item_type": "progress_entry",
+                        "status": updated_entry.status,
+                        "description_snippet": updated_entry.description[:100],
+                        "timestamp_created": updated_entry.timestamp.isoformat(), # Using existing timestamp as created_at for simplicity
+                        "parent_id": str(updated_entry.parent_id) if updated_entry.parent_id else None
+                    }
+                    vector_store_service.upsert_item_embedding(
+                        workspace_id=args.workspace_id,
+                        item_type="progress_entry",
+                        item_id=str(updated_entry.id),
+                        vector=vector,
+                        metadata=metadata_for_vector
+                    )
+                    log.info(f"Successfully updated embedding for progress entry ID {updated_entry.id}")
+                except Exception as e_embed_update:
+                    log.error(f"Failed to update embedding for progress entry ID {updated_entry.id}: {e_embed_update}", exc_info=True)
+                    # Do not let embedding failure make the whole operation fail, but log it.
+            else:
+                # This case should ideally not be reached if 'updated' is true.
+                log.warning(f"Progress entry ID {args.progress_id} was reportedly updated in DB, but could not be re-fetched for embedding update.")
             # --- End Update Vector Store ---
 
             return {"status": "success", "message": f"Progress entry ID {args.progress_id} updated successfully."}

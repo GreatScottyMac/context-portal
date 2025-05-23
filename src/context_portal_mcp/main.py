@@ -1,6 +1,7 @@
 import sys
 import uvicorn
 from fastapi import FastAPI
+from importlib import metadata # Added import
 import logging
 import argparse
 import os
@@ -41,8 +42,13 @@ async def conport_lifespan(server: FastMCP) -> AsyncIterator[None]:
         database.close_all_connections()
 
 # --- FastMCP Server Instance ---
-# Version from pyproject.toml would be ideal here, or define centrally
-CONPORT_VERSION = "0.1.0"
+# Dynamically fetch version from pyproject.toml
+try:
+    CONPORT_VERSION = metadata.version("context-portal-mcp")
+except metadata.PackageNotFoundError:
+    # Fallback for when the package is not installed (e.g., running from source)
+    log.warning("Package 'context-portal-mcp' not found. Using default version '0.0.0-dev' for CONPORT_VERSION.")
+    CONPORT_VERSION = "0.0.0-dev"
 
 conport_mcp = FastMCP(
     name="ConPort", # Pass name directly

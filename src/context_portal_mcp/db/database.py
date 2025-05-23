@@ -144,16 +144,23 @@ def initialize_database(conn: sqlite3.Connection):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL,
                 description TEXT,
-                tags TEXT -- JSON stringified list of tags
+                tags TEXT, -- JSON stringified list of tags
+                timestamp_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+                timestamp_updated DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         try:
             cursor.execute("ALTER TABLE system_patterns ADD COLUMN tags TEXT")
         except sqlite3.OperationalError as e:
-            if "duplicate column name: tags" in str(e).lower():
-                pass # Column already exists, ignore
-            else:
-                raise # Re-raise other operational errors
+            if "duplicate column name: tags" not in str(e).lower(): raise
+        try:
+            cursor.execute("ALTER TABLE system_patterns ADD COLUMN timestamp_created DATETIME DEFAULT CURRENT_TIMESTAMP")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name: timestamp_created" not in str(e).lower(): raise
+        try:
+            cursor.execute("ALTER TABLE system_patterns ADD COLUMN timestamp_updated DATETIME DEFAULT CURRENT_TIMESTAMP")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name: timestamp_updated" not in str(e).lower(): raise
 
         # Custom Data
         cursor.execute("""
@@ -162,9 +169,19 @@ def initialize_database(conn: sqlite3.Connection):
                 category TEXT NOT NULL,
                 key TEXT NOT NULL,
                 value TEXT NOT NULL, -- Store as JSON string
+                timestamp_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+                timestamp_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(category, key)
             )
         """)
+        try:
+            cursor.execute("ALTER TABLE custom_data ADD COLUMN timestamp_created DATETIME DEFAULT CURRENT_TIMESTAMP")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name: timestamp_created" not in str(e).lower(): raise
+        try:
+            cursor.execute("ALTER TABLE custom_data ADD COLUMN timestamp_updated DATETIME DEFAULT CURRENT_TIMESTAMP")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name: timestamp_updated" not in str(e).lower(): raise
 
         # General FTS5 table for custom_data
         # Drop any old glossary-specific triggers first
@@ -480,35 +497,44 @@ def get_decisions(
     conditions = []
     params_list: List[Any] = []
 
-    if tags_filter_include_all:
-        # For each tag in the list, we need to ensure it exists in the 'tags' JSON array.
-        # This is tricky with pure SQL LIKE on a JSON array string.
-        # A more robust way is to fetch and filter in Python, or use json_each if available and suitable.
-        # For simplicity here, we'll filter in Python after fetching.
-        # This means 'limit' will apply before this specific tag filter.
-        # A true SQL solution would be more complex, e.g., using json_tree or json_each and subqueries.
-        pass # Will be handled post-query
+    # Pydantic model validation ensures only one of these is present.
+    if tags_filter_include_any and len(tags_filter_include_any) > 0:
+        placeholders = ", ".join(["?"] * len(tags_filter_include_any))
+        # Ensure decisions.tags is not NULL and is a valid JSON array before json_each
+        conditions.append(f"json_valid(decisions.tags) AND EXISTS (SELECT 1 FROM json_each(decisions.tags) WHERE json_each.value IN ({placeholders}))")
+        params_list.extend(tags_filter_include_any)
 
-    if tags_filter_include_any:
-        # Similar to above, this is easier to handle post-query for now.
-        pass # Will be handled post-query
+    if tags_filter_include_all and len(tags_filter_include_all) > 0:
+        # Using the COUNT DISTINCT approach
+        placeholders = ", ".join(["?"] * len(tags_filter_include_all))
+        # Ensure decisions.tags is not NULL and is a valid JSON array
+        conditions.append(
+            f"json_valid(decisions.tags) AND (SELECT COUNT(DISTINCT je.value) FROM json_each(decisions.tags) je WHERE je.value IN ({placeholders})) = ?"
+        )
+        params_list.extend(tags_filter_include_all)
+        params_list.append(len(tags_filter_include_all))
 
     # ORDER BY must come before LIMIT
     order_by_clause = " ORDER BY timestamp DESC"
     
     limit_clause = ""
     if limit is not None and limit > 0:
-        limit_clause = " LIMIT ?"
-        params_list.append(limit)
+        # Limit must be applied after all filtering.
+        # If there are conditions, LIMIT is part of the main query.
+        # If no conditions, it's added directly.
+        pass # Limit will be added at the end of SQL construction
 
     # Construct the SQL query
-    # Since tag filtering will be done in Python for now, conditions list remains empty for SQL
     sql = base_sql
-    if conditions: # This block will not be hit with current Python-based tag filtering
+    if conditions:
         sql += " WHERE " + " AND ".join(conditions)
     
-    sql += order_by_clause + limit_clause
+    sql += order_by_clause
     
+    if limit is not None and limit > 0:
+        sql += " LIMIT ?"
+        params_list.append(limit)
+        
     params_tuple = tuple(params_list)
 
     try:
@@ -524,21 +550,10 @@ def get_decisions(
                 tags=json.loads(row['tags']) if row['tags'] else None
             ) for row in rows
         ]
-
-        # Python-based filtering for tags
-        if tags_filter_include_all:
-            decisions = [
-                d for d in decisions if d.tags and all(tag in d.tags for tag in tags_filter_include_all)
-            ]
-        
-        if tags_filter_include_any:
-            decisions = [
-                d for d in decisions if d.tags and any(tag in d.tags for tag in tags_filter_include_any)
-            ]
-
+        # Python-based filtering is now removed
         return decisions
     except (sqlite3.Error, json.JSONDecodeError) as e: # Added JSONDecodeError
-        raise DatabaseError(f"Failed to retrieve decisions: {e}")
+        raise DatabaseError(f"Failed to retrieve decisions with SQL filtering: {e}")
     finally:
         cursor.close()
 
@@ -673,6 +688,29 @@ def get_progress(
     finally:
         cursor.close()
 
+def get_progress_entry_by_id(workspace_id: str, progress_id: int) -> Optional[models.ProgressEntry]:
+    """Retrieves a specific progress entry by its ID."""
+    conn = get_db_connection(workspace_id)
+    cursor = conn.cursor()
+    sql = "SELECT id, timestamp, status, description, parent_id FROM progress_entries WHERE id = ?"
+    try:
+        cursor.execute(sql, (progress_id,))
+        row = cursor.fetchone()
+        if row:
+            return models.ProgressEntry(
+                id=row['id'],
+                timestamp=row['timestamp'],
+                status=row['status'],
+                description=row['description'],
+                parent_id=row['parent_id']
+            )
+        else:
+            return None # No entry found with that ID
+    except sqlite3.Error as e:
+        raise DatabaseError(f"Failed to retrieve progress entry with ID {progress_id}: {e}")
+    finally:
+        cursor.close()
+
 def update_progress_entry(workspace_id: str, update_args: models.UpdateProgressArgs) -> bool:
     """
     Updates an existing progress entry by its ID.
@@ -738,34 +776,45 @@ def delete_progress_entry_by_id(workspace_id: str, progress_id: int) -> bool:
     finally:
         cursor.close()
 def log_system_pattern(workspace_id: str, pattern_data: models.SystemPattern) -> models.SystemPattern:
-    """Logs or updates a system pattern. Uses INSERT OR REPLACE based on unique name."""
+    """Logs or updates a system pattern, managing timestamps correctly."""
     conn = get_db_connection(workspace_id)
     cursor = conn.cursor()
-    # Use INSERT OR REPLACE to handle unique constraint on 'name'
-    # This will overwrite the description and tags if the name already exists.
-    sql = """
-        INSERT OR REPLACE INTO system_patterns (name, description, tags)
-        VALUES (?, ?, ?)
-    """
     tags_json = json.dumps(pattern_data.tags) if pattern_data.tags is not None else None
-    params = (
-        pattern_data.name,
-        pattern_data.description,
-        tags_json
-    )
+    current_time = datetime.utcnow()
+
     try:
-        cursor.execute(sql, params)
-        # We might not get the correct lastrowid if it replaced,
-        # so we need to query back to get the ID if needed.
-        # For now, just commit and assume success or handle error.
-        # If returning the model with ID is critical, add a SELECT query here.
+        # Check if pattern already exists
+        cursor.execute("SELECT id, timestamp_created FROM system_patterns WHERE name = ?", (pattern_data.name,))
+        existing_pattern = cursor.fetchone()
+
+        if existing_pattern:
+            # Update existing pattern
+            pattern_id = existing_pattern['id']
+            timestamp_created = existing_pattern['timestamp_created'] # Keep original creation time
+            sql_update = """
+                UPDATE system_patterns
+                SET description = ?, tags = ?, timestamp_updated = ?
+                WHERE id = ?
+            """
+            params_update = (pattern_data.description, tags_json, current_time, pattern_id)
+            cursor.execute(sql_update, params_update)
+            pattern_data.id = pattern_id
+            pattern_data.timestamp_created = timestamp_created
+            pattern_data.timestamp_updated = current_time
+        else:
+            # Insert new pattern
+            sql_insert = """
+                INSERT INTO system_patterns (name, description, tags, timestamp_created, timestamp_updated)
+                VALUES (?, ?, ?, ?, ?)
+            """
+            params_insert = (pattern_data.name, pattern_data.description, tags_json, current_time, current_time)
+            cursor.execute(sql_insert, params_insert)
+            pattern_data.id = cursor.lastrowid
+            pattern_data.timestamp_created = current_time
+            pattern_data.timestamp_updated = current_time
+        
         conn.commit()
-        # Query back to get the ID (optional, adds overhead)
-        cursor.execute("SELECT id FROM system_patterns WHERE name = ?", (pattern_data.name,))
-        row = cursor.fetchone()
-        if row:
-            pattern_data.id = row['id']
-        return pattern_data # Return original data, possibly updated with ID
+        return pattern_data
     except sqlite3.Error as e:
         conn.rollback()
         raise DatabaseError(f"Failed to log system pattern '{pattern_data.name}': {e}")
@@ -778,47 +827,59 @@ def get_system_patterns(
     tags_filter_include_any: Optional[List[str]] = None
     # limit: Optional[int] = None, # Add if pagination is desired
 ) -> List[models.SystemPattern]:
-    """Retrieves system patterns, optionally filtered by tags."""
+    """Retrieves system patterns, optionally filtered by tags using SQL JSON1, including timestamps."""
     conn = get_db_connection(workspace_id)
     cursor = conn.cursor()
     
-    base_sql = "SELECT id, name, description, tags FROM system_patterns"
-    order_by_clause = " ORDER BY name ASC"
-    # params_list: List[Any] = [] # Not used for SQL filtering of tags for now
-    # limit_clause = ""
-    # if limit is not None and limit > 0:
-    #     limit_clause = " LIMIT ?"
-    #     params_list.append(limit)
+    base_sql = "SELECT id, name, description, tags, timestamp_created, timestamp_updated FROM system_patterns"
+    conditions = []
+    params_list: List[Any] = []
 
-    sql = base_sql + order_by_clause # + limit_clause
-    # params_tuple = tuple(params_list)
+    # Pydantic model validation ensures only one of these is present.
+    if tags_filter_include_any and len(tags_filter_include_any) > 0:
+        placeholders = ", ".join(["?"] * len(tags_filter_include_any))
+        # Ensure system_patterns.tags is not NULL and is a valid JSON array
+        conditions.append(f"json_valid(system_patterns.tags) AND EXISTS (SELECT 1 FROM json_each(system_patterns.tags) WHERE json_each.value IN ({placeholders}))")
+        params_list.extend(tags_filter_include_any)
+
+    if tags_filter_include_all and len(tags_filter_include_all) > 0:
+        placeholders = ", ".join(["?"] * len(tags_filter_include_all))
+        # Ensure system_patterns.tags is not NULL and is a valid JSON array
+        conditions.append(
+            f"json_valid(system_patterns.tags) AND (SELECT COUNT(DISTINCT je.value) FROM json_each(system_patterns.tags) je WHERE je.value IN ({placeholders})) = ?"
+        )
+        params_list.extend(tags_filter_include_all)
+        params_list.append(len(tags_filter_include_all))
+
+    order_by_clause = " ORDER BY name ASC"
+    # limit_clause handling can be added here if 'limit' parameter is introduced to this function
+    # For now, no limit parameter is defined for get_system_patterns.
+
+    sql = base_sql
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+    
+    sql += order_by_clause
+    
+    params_tuple = tuple(params_list)
 
     try:
-        cursor.execute(sql) #, params_tuple)
+        cursor.execute(sql, params_tuple)
         rows = cursor.fetchall()
         patterns = [
             models.SystemPattern(
                 id=row['id'],
                 name=row['name'],
                 description=row['description'],
-                tags=json.loads(row['tags']) if row['tags'] else None
+                tags=json.loads(row['tags']) if row['tags'] else None,
+                timestamp_created=row['timestamp_created'],
+                timestamp_updated=row['timestamp_updated']
             ) for row in rows
         ]
-
-        # Python-based filtering for tags
-        if tags_filter_include_all:
-            patterns = [
-                p for p in patterns if p.tags and all(tag in p.tags for tag in tags_filter_include_all)
-            ]
-        
-        if tags_filter_include_any:
-            patterns = [
-                p for p in patterns if p.tags and any(tag in p.tags for tag in tags_filter_include_any)
-            ]
-
+        # Python-based filtering is now removed
         return patterns
     except (sqlite3.Error, json.JSONDecodeError) as e: # Added JSONDecodeError
-        raise DatabaseError(f"Failed to retrieve system patterns: {e}")
+        raise DatabaseError(f"Failed to retrieve system patterns with SQL filtering: {e}")
     finally:
         cursor.close()
 
@@ -839,28 +900,44 @@ def delete_system_pattern_by_id(workspace_id: str, pattern_id: int) -> bool:
         cursor.close()
 
 def log_custom_data(workspace_id: str, data: models.CustomData) -> models.CustomData:
-    """Logs or updates a custom data entry. Uses INSERT OR REPLACE based on unique (category, key)."""
+    """Logs or updates a custom data entry, managing timestamps correctly."""
     conn = get_db_connection(workspace_id)
     cursor = conn.cursor()
-    sql = """
-        INSERT OR REPLACE INTO custom_data (category, key, value)
-        VALUES (?, ?, ?)
-    """
+    current_time = datetime.utcnow()
+    value_json = json.dumps(data.value) # Ensure value is serialized to JSON string
+
     try:
-        # Ensure value is serialized to JSON string
-        value_json = json.dumps(data.value)
-        params = (
-            data.category,
-            data.key,
-            value_json
-        )
-        cursor.execute(sql, params)
+        # Check if custom data entry already exists
+        cursor.execute("SELECT id, timestamp_created FROM custom_data WHERE category = ? AND key = ?", (data.category, data.key))
+        existing_data = cursor.fetchone()
+
+        if existing_data:
+            # Update existing entry
+            data_id = existing_data['id']
+            timestamp_created = existing_data['timestamp_created'] # Keep original creation time
+            sql_update = """
+                UPDATE custom_data
+                SET value = ?, timestamp_updated = ?
+                WHERE id = ?
+            """
+            params_update = (value_json, current_time, data_id)
+            cursor.execute(sql_update, params_update)
+            data.id = data_id
+            data.timestamp_created = timestamp_created
+            data.timestamp_updated = current_time
+        else:
+            # Insert new entry
+            sql_insert = """
+                INSERT INTO custom_data (category, key, value, timestamp_created, timestamp_updated)
+                VALUES (?, ?, ?, ?, ?)
+            """
+            params_insert = (data.category, data.key, value_json, current_time, current_time)
+            cursor.execute(sql_insert, params_insert)
+            data.id = cursor.lastrowid
+            data.timestamp_created = current_time
+            data.timestamp_updated = current_time
+            
         conn.commit()
-        # Query back to get ID if needed (similar to log_system_pattern)
-        cursor.execute("SELECT id FROM custom_data WHERE category = ? AND key = ?", (data.category, data.key))
-        row = cursor.fetchone()
-        if row:
-            data.id = row['id']
         return data
     except (sqlite3.Error, TypeError) as e: # TypeError for json.dumps
         conn.rollback()
@@ -873,13 +950,13 @@ def get_custom_data(
     category: Optional[str] = None,
     key: Optional[str] = None
 ) -> List[models.CustomData]:
-    """Retrieves custom data entries, optionally filtered by category and/or key."""
+    """Retrieves custom data entries, optionally filtered by category and/or key, including timestamps."""
     if key and not category:
         raise ValueError("Cannot filter by key without specifying a category.")
 
     conn = get_db_connection(workspace_id)
     cursor = conn.cursor()
-    sql = "SELECT id, category, key, value FROM custom_data"
+    sql = "SELECT id, category, key, value, timestamp_created, timestamp_updated FROM custom_data"
     conditions = []
     params_list = []
 
@@ -909,7 +986,9 @@ def get_custom_data(
                         id=row['id'],
                         category=row['category'],
                         key=row['key'],
-                        value=value_data
+                        value=value_data,
+                        timestamp_created=row['timestamp_created'],
+                        timestamp_updated=row['timestamp_updated']
                     )
                 )
             except json.JSONDecodeError as e:
@@ -1243,6 +1322,8 @@ limit_per_type: int = 5
     summary_results: Dict[str, Any] = {
         "recent_decisions": [],
         "recent_progress_entries": [],
+            "recent_system_patterns": [], # Added
+            "recent_custom_data": [],     # Added
         "recent_product_context_updates": [],
         "recent_active_context_updates": [],
         "recent_links_created": [],
@@ -1346,10 +1427,54 @@ limit_per_type: int = 5
         ]
 
         # Note about missing timestamps
-        summary_results["notes"].append(
-            "System Patterns and general Custom Data entries are not included in this summary "
-            "as they currently do not have creation/update timestamps in the database."
+        # Recent System Patterns
+        cursor.execute(
+            """
+            SELECT id, name, description, tags, timestamp_created, timestamp_updated
+            FROM system_patterns WHERE timestamp_updated >= ? ORDER BY timestamp_updated DESC LIMIT ?
+            """,
+            (start_datetime, limit_per_type)
         )
+        rows = cursor.fetchall()
+        summary_results["recent_system_patterns"] = [
+            models.SystemPattern(
+                id=row['id'], name=row['name'], description=row['description'],
+                tags=json.loads(row['tags']) if row['tags'] else None,
+                timestamp_created=row['timestamp_created'],
+                timestamp_updated=row['timestamp_updated']
+            ).model_dump(mode='json') for row in rows
+        ]
+
+        # Recent Custom Data
+        cursor.execute(
+            """
+            SELECT id, category, key, value, timestamp_created, timestamp_updated
+            FROM custom_data WHERE timestamp_updated >= ? ORDER BY timestamp_updated DESC LIMIT ?
+            """,
+            (start_datetime, limit_per_type)
+        )
+        rows = cursor.fetchall()
+        custom_data_list = []
+        for row in rows:
+            try:
+                value_data = json.loads(row['value'])
+                custom_data_list.append(
+                    models.CustomData(
+                        id=row['id'], category=row['category'], key=row['key'], value=value_data,
+                        timestamp_created=row['timestamp_created'],
+                        timestamp_updated=row['timestamp_updated']
+                    ).model_dump(mode='json')
+                )
+            except json.JSONDecodeError: # pragma: no cover
+                # This might happen if data was somehow stored incorrectly before JSON enforcement
+                # Or if a non-JSON string is stored despite model typing (e.g. direct DB manipulation)
+                print(f"Warning: Could not decode JSON for custom_data ID {row['id']} in recent activity summary.")
+        summary_results["recent_custom_data"] = custom_data_list
+        
+        # Clear or update notes if they are no longer relevant
+        # For now, let's remove the old note since timestamps are added.
+        # A more dynamic note system could be implemented if needed.
+        # summary_results["notes"].append("...") # Add new notes if any
 
         return summary_results
 
