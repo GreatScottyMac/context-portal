@@ -854,21 +854,6 @@ def main_logic(sys_args=None):
             log.warning(warning_msg)
             effective_workspace_id = current_cwd
 
-            # CRITICAL CHECK: Prevent creating DB in server's own directory due to misconfiguration
-            if effective_workspace_id and os.path.abspath(effective_workspace_id) == CONPORT_SERVER_ROOT_DIR:
-                error_msg = (
-                    f"CRITICAL ERROR: STDIO mode effective_workspace_id ('{effective_workspace_id}') "
-                    f"resolved to the ConPort server's own root directory ('{CONPORT_SERVER_ROOT_DIR}'). "
-                    "This is likely due to a client-side MCP configuration error where "
-                    "'--workspace_id' was not correctly resolved to your target project path, "
-                    "and no 'cwd' was set to the target project by the client. "
-                    "ConPort will NOT create a database within its own installation directory. "
-                    "Please correct your MCP client configuration to provide an absolute path "
-                    "for '--workspace_id' or ensure your client sets 'cwd' to your target project."
-                )
-                log.critical(error_msg)
-                sys.exit(1)
-
         try:
             # from src.context_portal_mcp.core.config import get_database_path # Import happens at module level
             # get_database_path(effective_workspace_id) # EARLY VALIDATION REMOVED - Path validation and dir creation will occur on first DB access.
