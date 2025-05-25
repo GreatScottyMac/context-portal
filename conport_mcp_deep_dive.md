@@ -434,11 +434,11 @@ To add a new MCP tool:
 2.  **Implement Handler Logic:** Add a new handler function in `handlers/mcp_handlers.py`. This function will take the validated Pydantic argument model as input and perform the core logic, likely interacting with `db/database.py`.
 3.  **Register Tool in `main.py`:**
     *   Import the new argument model and handler function.
-    *   Use the `@conport_mcp.tool(name="your_new_tool_name")` decorator on a new async wrapper function.
+    *   Use the `@conport_mcp.tool(name="your_new_tool_name", description="...")` decorator on a new async wrapper function.
     *   This wrapper function will:
-        *   Receive `raw_args_from_fastmcp: Dict[str, Any]` and `ctx: MCPContext`.
-        *   Extract necessary fields from `raw_args_from_fastmcp`.
-        *   Instantiate your Pydantic argument model with these fields.
+        *   Receive arguments from client as `Dict[str, Any]` and `ctx: MCPContext`.
+        *   Extract necessary arguments
+        *   Instantiate your Pydantic argument model using the received parameters.
         *   Call your handler function from `mcp_handlers.py` with the Pydantic model instance.
         *   Return the result from the handler.
 4.  **Update `TOOL_ARG_MODELS`:** Add your new tool name and its argument model to the `TOOL_ARG_MODELS` dictionary in `db/models.py` (used by `get_conport_schema`).

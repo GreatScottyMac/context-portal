@@ -4,4 +4,6 @@ pydantic
 mcp[cli] # For FastMCP server and STDIO transport
 sentence-transformers
 chromadb
+starlette
+itsdangerous
 # sqlite3 is built-in
