@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/greatscottymac-context-portal-badge.png)](https://mseep.ai/app/greatscottymac-context-portal)
+
 <div align="center">
 
 <br>
