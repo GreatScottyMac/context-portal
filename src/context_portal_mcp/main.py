@@ -24,6 +24,7 @@ try:
     from .db import database, models # models for tool argument types
     from .db.database import ensure_alembic_files_exist # Import the provisioning function
     from .core import exceptions # For custom exceptions if FastMCP doesn't map them
+    from .core.workspace_detector import resolve_workspace_id, WorkspaceDetector # Import workspace detection
 except ImportError:
     import os
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -31,6 +32,7 @@ except ImportError:
     from src.context_portal_mcp.db import database, models
     from src.context_portal_mcp.db.database import ensure_alembic_files_exist
     from src.context_portal_mcp.core import exceptions
+    from src.context_portal_mcp.core.workspace_detector import resolve_workspace_id, WorkspaceDetector
 
 log = logging.getLogger(__name__)
 
@@ -789,6 +791,32 @@ async def tool_semantic_search_conport(
         log.error(f"Unexpected error processing args for semantic_search_conport: {e}. Args: workspace_id={workspace_id}, query_text='{query_text}'")
         raise exceptions.ContextPortalError(f"Server error processing semantic_search_conport: {type(e).__name__} - {e}")
 
+@conport_mcp.tool(name="get_workspace_detection_info", description="Provides detailed information about workspace detection for debugging and verification.")
+async def tool_get_workspace_detection_info(
+    ctx: Context,
+    start_path: Annotated[Optional[str], Field(description="Starting directory for detection analysis (default: current directory)")] = None
+) -> Dict[str, Any]:
+    """
+    MCP tool for getting workspace detection information.
+    This tool helps debug workspace detection issues and verify the detection process.
+    """
+    try:
+        detector = WorkspaceDetector(start_path)
+        detection_info = detector.get_detection_info()
+        
+        # Add additional runtime information
+        detection_info.update({
+            'server_version': CONPORT_VERSION,
+            'detection_timestamp': datetime.now().isoformat(),
+            'auto_detection_available': True,
+            'mcp_context_workspace': detector.detect_from_mcp_context()
+        })
+        
+        return detection_info
+    except Exception as e:
+        log.error(f"Error in get_workspace_detection_info: {e}")
+        raise exceptions.ContextPortalError(f"Server error getting workspace detection info: {type(e).__name__} - {e}")
+
 # Mount the FastMCP HTTP app to the FastAPI app at the /mcp path
 # This will handle both GET and POST requests using modern HTTP transport
 app.mount("/mcp", conport_mcp.http_app())
@@ -822,14 +850,31 @@ def main_logic(sys_args=None):
         default=8000,
         help="Port to bind the HTTP server to (default: 8000)"
     )
-    # --workspace_id is not directly used by uvicorn.run for the app itself,
-    # but it's good for the CLI to accept it for consistency if an IDE launches it.
-    # The actual workspace_id is handled per-request by FastMCP tools.
+    # Enhanced workspace_id parameter with auto-detection support
     parser.add_argument(
         "--workspace_id",
         type=str,
         required=False, # No longer strictly required for server startup itself
-        help="Optional: Default workspace ID (primarily for IDE launch context, tool calls still need it)."
+        help="Workspace ID. If not provided, will auto-detect from current directory or MCP client context."
+    )
+    
+    # New auto-detection parameters
+    parser.add_argument(
+        "--auto-detect-workspace",
+        action="store_true",
+        default=True,
+        help="Automatically detect workspace from current directory (default: True)"
+    )
+    
+    parser.add_argument(
+        "--workspace-search-start",
+        help="Starting directory for workspace detection (default: current directory)"
+    )
+    
+    parser.add_argument(
+        "--no-auto-detect",
+        action="store_true",
+        help="Disable automatic workspace detection"
     )
     # The --mode argument might be deprecated if FastMCP only runs HTTP this way,
     # or we add a condition here to call conport_mcp.run(transport="stdio")
@@ -867,20 +912,23 @@ def main_logic(sys_args=None):
         # The FastAPI `app` (with FastMCP mounted) is run by Uvicorn
         uvicorn.run(app, host=args.host, port=args.port)
     elif args.mode == "stdio":
-        log.info(f"Starting ConPort in STDIO mode using FastMCP for initial CLI arg workspace_id: {args.workspace_id}")
+        log.info(f"Starting ConPort in STDIO mode with workspace detection enabled")
 
-        effective_workspace_id = args.workspace_id
-        if args.workspace_id == "${workspaceFolder}":
-            # import os # Moved to top-level imports
-            current_cwd = os.getcwd()
-            warning_msg = (
-                f"MAIN.PY: WARNING - Workspace ID was literally '${{workspaceFolder}}'. "
-                f"This variable was not expanded by the client IDE. "
-                f"Falling back to current working directory as workspace_id: {current_cwd}. "
-                f"Ensure CWD in MCP config ('{current_cwd}') is the correct project workspace."
-            )
-            log.warning(warning_msg)
-            effective_workspace_id = current_cwd
+        # Resolve workspace ID using the new detection system
+        auto_detect_enabled = args.auto_detect_workspace and not args.no_auto_detect
+        effective_workspace_id = resolve_workspace_id(
+            provided_workspace_id=args.workspace_id,
+            auto_detect=auto_detect_enabled,
+            start_path=args.workspace_search_start
+        )
+        
+        # Log detection details for debugging
+        if auto_detect_enabled:
+            detector = WorkspaceDetector(args.workspace_search_start)
+            detection_info = detector.get_detection_info()
+            log.info(f"Workspace detection details: {detection_info}")
+        
+        log.info(f"Effective workspace ID: {effective_workspace_id}")
 
         # Pre-warm the database connection to trigger one-time initialization (e.g., migrations)
         # before the MCP transport starts. This prevents timeouts on the client's first tool call.
