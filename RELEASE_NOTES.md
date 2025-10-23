@@ -1,5 +1,4 @@
 # Context Portal MCP Release Notes
-# Context Portal MCP Release Notes
 
 <br>
 
