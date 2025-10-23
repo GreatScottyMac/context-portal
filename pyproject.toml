@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "context-portal-mcp"
-version = "0.3.4"
+version = "0.3.5"
 authors = [
     {name = "Scott McLeod", email = "contextportal@gmail.com"}
 ]
@@ -36,6 +36,7 @@ dependencies = [
     "sentence-transformers",
     "chromadb>=1.0.0",
     "alembic",
+    "authlib~=1.6.5",
 ]
 
 [project.optional-dependencies]

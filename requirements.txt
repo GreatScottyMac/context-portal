@@ -6,3 +6,4 @@ sentence-transformers
 fastmcp>=0.9.0
 chromadb>=1.0.0
 alembic
+authlib~=1.6.5  # Security fix: bump to >=1.6.5 to address CVE-2025-61920 / GHSA-g7f3-828f-7h7m

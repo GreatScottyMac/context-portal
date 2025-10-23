@@ -1,6 +1,18 @@
 # Context Portal MCP Release Notes
+# Context Portal MCP Release Notes
 
 <br>
+
+## v0.3.5 (2025-10-22)
+
+### Security
+- Bumped Authlib to `~=1.6.5` to remediate CVE-2025-61920 (High) and GHSA-g7f3-828f-7h7m (Moderate).
+- Regenerated `uv.lock` to pin `authlib==1.6.5` and align with current dependencies.
+- Verified via full test run: 15 passed, 0 failed.
+
+### Packaging
+- Updated project version to `0.3.5` in `pyproject.toml`.
+- Ensured `authlib` is declared in `pyproject.toml` dependencies to keep locks and installs consistent across environments.
 
 ## v0.3.4 (2025-09-18)
 
@@ -8,6 +20,8 @@
 - **String-to-Integer Coercion:** Fixed a validation timing issue where field-level `ge`/`le` constraints in FastMCP tool definitions were preventing string-to-integer coercion from working properly. String parameters like `"5"` for `limit` were being rejected before the `IntCoercionMixin` could convert them to integers. The fix removes field-level constraints from 13 affected tools and replaces them with `@model_validator(mode='after')` methods in Pydantic models, ensuring coercion happens before validation.
 
 ### Technical Details
+### Security
+- Dependency hardening: Pin Authlib to `~=1.6.5` to address CVE-2025-61920 (High) and GHSA-g7f3-828f-7h7m (Moderate). Regenerated `uv.lock` to ensure 1.6.5 is locked. No runtime regressions observed (15/15 tests passing).
 - **Affected Tools:** `get_decisions`, `get_progress`, `get_system_patterns`, `get_custom_data`, `search_decisions_fts`, `search_custom_data_value_fts`, `search_project_glossary_fts`, `get_recent_activity_summary`, `semantic_search_conport`, `get_item_history`, `batch_log_items`, `delete_decision_by_id`, `delete_system_pattern_by_id`
 - **Root Cause:** FastMCP field-level `ge=1` and `le=25` constraints were applied before Pydantic model validation, preventing the custom `IntCoercionMixin` from converting string inputs to integers
 - **Solution:** Moved all integer validation logic to `@model_validator(mode='after')` methods that run after field coercion
