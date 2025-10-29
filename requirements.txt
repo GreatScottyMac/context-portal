@@ -1,5 +1,5 @@
 fastapi==0.116.2
-starlette>=0.47.2,<0.49.0
+starlette>=0.49.1  # Security fix: CVE-2025-62727
 uvicorn[standard]
 pydantic>=2.0.0
 sentence-transformers
@@ -7,3 +7,4 @@ fastmcp>=0.9.0
 chromadb>=1.0.0
 alembic
 authlib~=1.6.5  # Security fix: bump to >=1.6.5 to address CVE-2025-61920 / GHSA-g7f3-828f-7h7m
+urllib3>=2.5.0  # Security fix: CVE-2025-50181, CVE-2025-50182

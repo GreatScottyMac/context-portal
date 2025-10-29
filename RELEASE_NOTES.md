@@ -2,6 +2,18 @@
 
 <br>
 
+## v0.3.6 (2025-10-28)
+
+### Security
+- Updated **starlette** to `>=0.49.1` to remediate CVE-2025-62727 (High severity - O(n^2) DoS vulnerability in Range header merging in `starlette.responses.FileResponse`).
+- Updated **urllib3** to `>=2.5.0` to remediate CVE-2025-50181 and CVE-2025-50182 (Moderate severity).
+
+### Packaging
+- Updated project version to `0.3.6` in `pyproject.toml`.
+- Added explicit `urllib3>=2.5.0` dependency to both `requirements.txt` and `pyproject.toml`.
+
+<br>
+
 ## v0.3.5 (2025-10-22)
 
 ### Security
