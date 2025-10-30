@@ -2,6 +2,28 @@
 
 <br>
 
+## v0.3.7 (2025-10-30)
+
+### Critical Fix
+- **Resolved FastAPI/Starlette Dependency Conflict:** Fixed a dependency conflict that was preventing uvx installation. The issue occurred because `fastapi==0.116.2` required `starlette<0.49.0`, while we needed `starlette>=0.49.1` for the CVE-2025-62727 security fix.
+
+### Changes
+- **Updated FastAPI:** Upgraded from `0.116.2` to `>=0.119.1`, which natively supports Starlette 0.49.1+
+- **Removed Explicit Starlette Dependency:** No longer needed as FastAPI 0.119.1+ automatically includes the secure version of Starlette
+- **Maintained Security Posture:** The update preserves all security fixes including CVE-2025-62727 (Starlette), CVE-2025-50181, and CVE-2025-50182 (urllib3)
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git conport-mcp --mode stdio
+```
+
+Or via pip:
+```bash
+pip install context-portal-mcp
+```
+
+<br>
+
 ## v0.3.6 (2025-10-28)
 
 ### Security
