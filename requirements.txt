@@ -7,13 +7,13 @@ pydantic
 # Context Portal MCP
 git+https://github.com/GreatScottyMac/context-portal.git@v0.3.7
 
-# Other dependencies
+# Other dependencies with versions that work together
 sentence-transformers
-fastmcp
+fastmcp>=2.13.0  # This requires httpx>=0.28.1
 chromadb
 alembic
 authlib
-urllib3
+urllib3>=2.5.0  # For security fixes
 
 # Dependencies with version constraints
-httpx
+httpx>=0.28.1  # Matches fastmcp's requirement
