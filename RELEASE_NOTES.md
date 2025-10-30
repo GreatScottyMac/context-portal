@@ -2,6 +2,18 @@
 
 <br>
 
+## v0.3.8 (2025-10-30)
+
+### Dependency Management
+- **Updated Dependencies:** Resolved dependency conflicts by updating package version constraints
+- **FastMCP Security:** Ensured compatibility with secure FastMCP versions (>=2.13.0)
+- **HTTPX Compatibility:** Updated to require httpx>=0.28.1 to match FastMCP requirements
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git@v0.3.8 conport-mcp --mode stdio
+```
+
 ## v0.3.7 (2025-10-30)
 
 ### Critical Fix
