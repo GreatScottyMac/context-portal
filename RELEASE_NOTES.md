@@ -2,6 +2,24 @@
 
 <br>
 
+## v0.3.10 (2025-12-06)
+
+### Maintenance
+- **Codebase Refactoring:** Major cleanup of `main.py` to resolve over 200 linting issues, improving code quality and maintainability.
+- **Version Synchronization:** Synchronized version numbers between `pyproject.toml` and `main.py`.
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git@v0.3.10 conport-mcp --mode stdio
+```
+
+Or via pip:
+```bash
+pip install context-portal-mcp
+```
+
+<br>
+
 ## v0.3.9 (2025-12-06)
 
 ### Security & Maintenance
