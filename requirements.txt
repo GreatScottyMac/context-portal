@@ -4,9 +4,6 @@ starlette>=0.50.0
 uvicorn[standard]>=0.38.0
 pydantic>=2.12.5
 
-# Context Portal MCP
-git+https://github.com/GreatScottyMac/context-portal.git@v0.3.9
-
 # Other dependencies
 sentence-transformers>=3.3.1
 fastmcp>=2.13.3
