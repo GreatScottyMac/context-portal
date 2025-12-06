@@ -2,6 +2,48 @@
 
 <br>
 
+## v0.3.11 (2025-12-06)
+
+### Security
+- **Dependabot Alert #11:** Resolved a DNS rebinding vulnerability in the `mcp` Python SDK by forcing an update to `mcp>=1.23.0`. This was achieved by adding a `[tool.uv]` override in `pyproject.toml` to bypass the restrictive dependency in `fastmcp` 2.13.3.
+
+### Maintenance
+- **Dependency Updates:** Updated all project dependencies to their latest compatible versions using `uv lock --upgrade`.
+    - `anyio` -> `4.12.0`
+    - `attrs` -> `25.4.0`
+    - `bcrypt` -> `5.0.0`
+    - `cachetools` -> `6.2.2`
+    - `certifi` -> `2025.11.12`
+    - `cryptography` -> `46.0.3`
+    - `fsspec` -> `2025.12.0`
+    - `google-auth` -> `2.43.0`
+    - `grpcio` -> `1.76.0`
+    - `huggingface-hub` -> `0.36.0`
+    - `numpy` -> `2.3.5`
+    - `onnxruntime` -> `1.23.2`
+    - `opentelemetry-*` -> `1.39.0`
+    - `pillow` -> `12.0.0`
+    - `protobuf` -> `6.33.2`
+    - `pydantic-settings` -> `2.12.0`
+    - `pytest` -> `9.0.1`
+    - `sentence-transformers` -> `5.1.2`
+    - `sqlalchemy` -> `2.0.44`
+    - `torch` -> `2.9.1`
+    - `transformers` -> `4.57.3`
+    - `typer` -> `0.20.0`
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git@v0.3.11 conport-mcp --mode stdio
+```
+
+Or via pip:
+```bash
+pip install context-portal-mcp
+```
+
+<br>
+
 ## v0.3.10 (2025-12-06)
 
 ### Maintenance
