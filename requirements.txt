@@ -1,19 +1,19 @@
 # Core dependencies
-fastapi
-starlette
-uvicorn[standard]
-pydantic
+fastapi>=0.120.0
+starlette>=0.50.0
+uvicorn[standard]>=0.38.0
+pydantic>=2.12.5
 
 # Context Portal MCP
-git+https://github.com/GreatScottyMac/context-portal.git@v0.3.7
+git+https://github.com/GreatScottyMac/context-portal.git@v0.3.9
 
-# Other dependencies with versions that work together
-sentence-transformers
-fastmcp>=2.13.0  # This requires httpx>=0.28.1
-chromadb
-alembic
-authlib
-urllib3>=2.5.0  # For security fixes
+# Other dependencies
+sentence-transformers>=3.3.1
+fastmcp>=2.13.3
+chromadb>=1.3.5
+alembic>=1.17.2
+authlib>=1.6.5
+urllib3>=2.6.0
 
 # Dependencies with version constraints
-httpx>=0.28.1  # Matches fastmcp's requirement
+httpx>=0.28.1

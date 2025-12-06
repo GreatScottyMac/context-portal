@@ -2,6 +2,33 @@
 
 <br>
 
+## v0.3.9 (2025-12-06)
+
+### Security & Maintenance
+- **Dependency Updates:** Updated all core dependencies to their latest stable versions (as of Dec 2025) to address potential security vulnerabilities and ensure compatibility.
+    - `fastapi` -> `0.120.0`
+    - `uvicorn` -> `0.38.0`
+    - `pydantic` -> `2.12.5`
+    - `fastmcp` -> `2.13.3`
+    - `sentence-transformers` -> `3.3.1`
+    - `chromadb` -> `1.3.5`
+    - `alembic` -> `1.17.2`
+    - `urllib3` -> `2.6.0`
+    - `httpx` -> `0.28.1`
+    - `starlette` -> `0.50.0`
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git@v0.3.9 conport-mcp --mode stdio
+```
+
+Or via pip:
+```bash
+pip install context-portal-mcp
+```
+
+<br>
+
 ## v0.3.8 (2025-10-30)
 
 ### Dependency Management
