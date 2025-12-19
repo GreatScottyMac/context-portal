@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "context-portal-mcp"
-version = "0.3.11"
+version = "0.3.12"
 authors = [
     {name = "Scott McLeod", email = "contextportal@gmail.com"}
 ]
@@ -38,6 +38,7 @@ dependencies = [
     "alembic>=1.17.2",
     "authlib>=1.6.5",
     "urllib3>=2.6.0",
+    "filelock>=3.16.2",
 ]
 
 [project.optional-dependencies]

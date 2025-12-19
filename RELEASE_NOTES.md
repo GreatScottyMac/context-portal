@@ -2,6 +2,23 @@
 
 <br>
 
+## v0.3.12 (2025-12-19)
+
+### Security
+- **Dependabot Alert #14:** Mitigated a TOCTOU race condition in `filelock` that can enable symlink attacks during lock file creation (CVE-2024-53981) by enforcing `filelock>=3.16.2`.
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git@v0.3.12 conport-mcp --mode stdio
+```
+
+Or via pip:
+```bash
+pip install context-portal-mcp
+```
+
+<br>
+
 ## v0.3.11 (2025-12-06)
 
 ### Security
