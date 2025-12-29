@@ -14,6 +14,7 @@ from typing import Annotated, Any, AsyncIterator, Dict, List, Optional, Union
 import uvicorn
 from fastapi import FastAPI
 from fastmcp import Context, FastMCP
+from mcp.types import ToolAnnotations
 from pydantic import Field
 
 # Local imports
@@ -131,7 +132,11 @@ app = FastAPI(title="ConPort MCP Server Wrapper", version=CONPORT_VERSION)
 
 @conport_mcp.tool(
     name="get_product_context",
-    description="Retrieves the overall project goals, features, and architecture."
+    description="Retrieves the overall project goals, features, and architecture.",
+    annotations=ToolAnnotations(
+        title="Get Product Context",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_product_context(
     workspace_id: Annotated[str, Field(
@@ -167,7 +172,11 @@ async def tool_get_product_context(
     name="update_product_context",
     description="Updates the product context. Accepts full `content` (object) or "
                 "`patch_content` (object) for partial updates "
-                "(use `__DELETE__` as a value in patch to remove a key)."
+                "(use `__DELETE__` as a value in patch to remove a key).",
+    annotations=ToolAnnotations(
+        title="Update Product Context",
+        destructiveHint=True,
+    ),
 )
 async def tool_update_product_context(
     workspace_id: Annotated[str, Field(
@@ -223,7 +232,11 @@ async def tool_update_product_context(
 
 @conport_mcp.tool(
     name="get_active_context",
-    description="Retrieves the current working focus, recent changes, and open issues."
+    description="Retrieves the current working focus, recent changes, and open issues.",
+    annotations=ToolAnnotations(
+        title="Get Active Context",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_active_context(
     workspace_id: Annotated[str, Field(
@@ -258,7 +271,11 @@ async def tool_get_active_context(
     name="update_active_context",
     description="Updates the active context. Accepts full `content` (object) or "
                 "`patch_content` (object) for partial updates "
-                "(use `__DELETE__` as a value in patch to remove a key)."
+                "(use `__DELETE__` as a value in patch to remove a key).",
+    annotations=ToolAnnotations(
+        title="Update Active Context",
+        destructiveHint=True,
+    ),
 )
 async def tool_update_active_context(
     workspace_id: Annotated[str, Field(
@@ -311,7 +328,11 @@ async def tool_update_active_context(
 
 @conport_mcp.tool(
     name="log_decision",
-    description="Logs an architectural or implementation decision."
+    description="Logs an architectural or implementation decision.",
+    annotations=ToolAnnotations(
+        title="Log Decision",
+        destructiveHint=True,
+    ),
 )
 async def tool_log_decision(
     workspace_id: Annotated[str, Field(
@@ -364,7 +385,14 @@ async def tool_log_decision(
             f"Server error processing log_decision: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="get_decisions", description="Retrieves logged decisions.")
+@conport_mcp.tool(
+    name="get_decisions",
+    description="Retrieves logged decisions.",
+    annotations=ToolAnnotations(
+        title="Get Decisions",
+        readOnlyHint=True,
+    ),
+)
 async def tool_get_decisions(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -425,7 +453,11 @@ async def tool_get_decisions(
 
 @conport_mcp.tool(
     name="search_decisions_fts",
-    description="Full-text search across decision fields (summary, rationale, details, tags)."
+    description="Full-text search across decision fields (summary, rationale, details, tags).",
+    annotations=ToolAnnotations(
+        title="Search Decisions",
+        readOnlyHint=True,
+    ),
 )
 async def tool_search_decisions_fts(
     workspace_id: Annotated[str, Field(
@@ -472,7 +504,14 @@ async def tool_search_decisions_fts(
             f"Server error processing search_decisions_fts: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="log_progress", description="Logs a progress entry or task status.")
+@conport_mcp.tool(
+    name="log_progress",
+    description="Logs a progress entry or task status.",
+    annotations=ToolAnnotations(
+        title="Log Progress",
+        destructiveHint=True,
+    ),
+)
 async def tool_log_progress(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -546,7 +585,14 @@ async def tool_log_progress(
             f"Server error processing log_progress: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="get_progress", description="Retrieves progress entries.")
+@conport_mcp.tool(
+    name="get_progress",
+    description="Retrieves progress entries.",
+    annotations=ToolAnnotations(
+        title="Get Progress",
+        readOnlyHint=True,
+    ),
+)
 async def tool_get_progress(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -597,7 +643,14 @@ async def tool_get_progress(
             f"Server error processing get_progress: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="update_progress", description="Updates an existing progress entry.")
+@conport_mcp.tool(
+    name="update_progress",
+    description="Updates an existing progress entry.",
+    annotations=ToolAnnotations(
+        title="Update Progress",
+        destructiveHint=True,
+    ),
+)
 async def tool_update_progress(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -662,7 +715,14 @@ async def tool_update_progress(
             f"Server error processing update_progress: {type(e).__name__} - {e}"
         )
 
-@conport_mcp.tool(name="delete_progress_by_id", description="Deletes a progress entry by its ID.")
+@conport_mcp.tool(
+    name="delete_progress_by_id",
+    description="Deletes a progress entry by its ID.",
+    annotations=ToolAnnotations(
+        title="Delete Progress",
+        destructiveHint=True,
+    ),
+)
 async def tool_delete_progress_by_id(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -704,7 +764,14 @@ async def tool_delete_progress_by_id(
             f"Server error processing delete_progress_by_id: {type(e).__name__} - {e}"
         )
 
-@conport_mcp.tool(name="log_system_pattern", description="Logs or updates a system/coding pattern.")
+@conport_mcp.tool(
+    name="log_system_pattern",
+    description="Logs or updates a system/coding pattern.",
+    annotations=ToolAnnotations(
+        title="Log System Pattern",
+        destructiveHint=True,
+    ),
+)
 async def tool_log_system_pattern(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -754,7 +821,14 @@ async def tool_log_system_pattern(
             f"Server error processing log_system_pattern: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="get_system_patterns", description="Retrieves system patterns.")
+@conport_mcp.tool(
+    name="get_system_patterns",
+    description="Retrieves system patterns.",
+    annotations=ToolAnnotations(
+        title="Get System Patterns",
+        readOnlyHint=True,
+    ),
+)
 async def tool_get_system_patterns(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -816,7 +890,11 @@ async def tool_get_system_patterns(
 @conport_mcp.tool(
     name="log_custom_data",
     description="Stores/updates a custom key-value entry under a category. "
-                "Value is JSON-serializable."
+                "Value is JSON-serializable.",
+    annotations=ToolAnnotations(
+        title="Log Custom Data",
+        destructiveHint=True,
+    ),
 )
 async def tool_log_custom_data(
     workspace_id: Annotated[str, Field(
@@ -868,7 +946,14 @@ async def tool_log_custom_data(
             f"Server error processing log_custom_data: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="get_custom_data", description="Retrieves custom data.")
+@conport_mcp.tool(
+    name="get_custom_data",
+    description="Retrieves custom data.",
+    annotations=ToolAnnotations(
+        title="Get Custom Data",
+        readOnlyHint=True,
+    ),
+)
 async def tool_get_custom_data(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -914,7 +999,14 @@ async def tool_get_custom_data(
             f"Server error processing get_custom_data: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="delete_custom_data", description="Deletes a specific custom data entry.")
+@conport_mcp.tool(
+    name="delete_custom_data",
+    description="Deletes a specific custom data entry.",
+    annotations=ToolAnnotations(
+        title="Delete Custom Data",
+        destructiveHint=True,
+    ),
+)
 async def tool_delete_custom_data(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -961,7 +1053,11 @@ async def tool_delete_custom_data(
         )
 @conport_mcp.tool(
     name="search_project_glossary_fts",
-    description="Full-text search within the 'ProjectGlossary' custom data category."
+    description="Full-text search within the 'ProjectGlossary' custom data category.",
+    annotations=ToolAnnotations(
+        title="Search Glossary",
+        readOnlyHint=True,
+    ),
 )
 async def tool_search_project_glossary_fts(
     workspace_id: Annotated[str, Field(
@@ -1010,7 +1106,11 @@ async def tool_search_project_glossary_fts(
 
 @conport_mcp.tool(
     name="export_conport_to_markdown",
-    description="Exports ConPort data to markdown files."
+    description="Exports ConPort data to markdown files.",
+    annotations=ToolAnnotations(
+        title="Export to Markdown",
+        destructiveHint=True,
+    ),
 )
 async def tool_export_conport_to_markdown(
     workspace_id: Annotated[str, Field(
@@ -1055,7 +1155,11 @@ async def tool_export_conport_to_markdown(
 
 @conport_mcp.tool(
     name="import_markdown_to_conport",
-    description="Imports data from markdown files into ConPort."
+    description="Imports data from markdown files into ConPort.",
+    annotations=ToolAnnotations(
+        title="Import from Markdown",
+        destructiveHint=True,
+    ),
 )
 async def tool_import_markdown_to_conport(
     workspace_id: Annotated[str, Field(
@@ -1102,7 +1206,11 @@ async def tool_import_markdown_to_conport(
 @conport_mcp.tool(
     name="link_conport_items",
     description="Creates a relationship link between two ConPort items, "
-                "explicitly building out the project knowledge graph."
+                "explicitly building out the project knowledge graph.",
+    annotations=ToolAnnotations(
+        title="Link Items",
+        destructiveHint=True,
+    ),
 )
 async def tool_link_conport_items(
     workspace_id: Annotated[str, Field(
@@ -1161,7 +1269,11 @@ async def tool_link_conport_items(
 
 @conport_mcp.tool(
     name="get_linked_items",
-    description="Retrieves items linked to a specific item."
+    description="Retrieves items linked to a specific item.",
+    annotations=ToolAnnotations(
+        title="Get Linked Items",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_linked_items(
     workspace_id: Annotated[str, Field(
@@ -1225,7 +1337,11 @@ async def tool_get_linked_items(
 
 @conport_mcp.tool(
     name="search_custom_data_value_fts",
-    description="Full-text search across all custom data values, categories, and keys."
+    description="Full-text search across all custom data values, categories, and keys.",
+    annotations=ToolAnnotations(
+        title="Search Custom Data",
+        readOnlyHint=True,
+    ),
 )
 async def tool_search_custom_data_value_fts(
     workspace_id: Annotated[str, Field(
@@ -1281,7 +1397,11 @@ async def tool_search_custom_data_value_fts(
 @conport_mcp.tool(
     name="batch_log_items",
     description="Logs multiple items of the same type "
-                "(e.g., decisions, progress entries) in a single call."
+                "(e.g., decisions, progress entries) in a single call.",
+    annotations=ToolAnnotations(
+        title="Batch Log Items",
+        destructiveHint=True,
+    ),
 )
 async def tool_batch_log_items(
     workspace_id: Annotated[str, Field(
@@ -1333,7 +1453,11 @@ async def tool_batch_log_items(
 
 @conport_mcp.tool(
     name="get_item_history",
-    description="Retrieves version history for Product or Active Context."
+    description="Retrieves version history for Product or Active Context.",
+    annotations=ToolAnnotations(
+        title="Get Item History",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_item_history(
     workspace_id: Annotated[str, Field(
@@ -1401,7 +1525,14 @@ async def tool_get_item_history(
             f"Server error processing get_item_history: {type(e).__name__}"
         )
 
-@conport_mcp.tool(name="delete_decision_by_id", description="Deletes a decision by its ID.")
+@conport_mcp.tool(
+    name="delete_decision_by_id",
+    description="Deletes a decision by its ID.",
+    annotations=ToolAnnotations(
+        title="Delete Decision",
+        destructiveHint=True,
+    ),
+)
 async def tool_delete_decision_by_id(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
@@ -1441,7 +1572,11 @@ async def tool_delete_decision_by_id(
 
 @conport_mcp.tool(
     name="delete_system_pattern_by_id",
-    description="Deletes a system pattern by its ID."
+    description="Deletes a system pattern by its ID.",
+    annotations=ToolAnnotations(
+        title="Delete System Pattern",
+        destructiveHint=True,
+    ),
 )
 async def tool_delete_system_pattern_by_id(
     workspace_id: Annotated[str, Field(
@@ -1482,7 +1617,11 @@ async def tool_delete_system_pattern_by_id(
 
 @conport_mcp.tool(
     name="get_conport_schema",
-    description="Retrieves the schema of available ConPort tools and their arguments."
+    description="Retrieves the schema of available ConPort tools and their arguments.",
+    annotations=ToolAnnotations(
+        title="Get Schema",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_conport_schema(
     workspace_id: Annotated[str, Field(
@@ -1518,7 +1657,11 @@ async def tool_get_conport_schema(
 
 @conport_mcp.tool(
     name="get_recent_activity_summary",
-    description="Provides a summary of recent ConPort activity (new/updated items)."
+    description="Provides a summary of recent ConPort activity (new/updated items).",
+    annotations=ToolAnnotations(
+        title="Get Activity Summary",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_recent_activity_summary(
     workspace_id: Annotated[str, Field(
@@ -1586,7 +1729,11 @@ async def tool_get_recent_activity_summary(
 
 @conport_mcp.tool(
     name="semantic_search_conport",
-    description="Performs a semantic search across ConPort data."
+    description="Performs a semantic search across ConPort data.",
+    annotations=ToolAnnotations(
+        title="Semantic Search",
+        readOnlyHint=True,
+    ),
 )
 async def tool_semantic_search_conport(
     workspace_id: Annotated[str, Field(
@@ -1669,7 +1816,11 @@ async def tool_semantic_search_conport(
 @conport_mcp.tool(
     name="get_workspace_detection_info",
     description="Provides detailed information about workspace detection "
-                "for debugging and verification."
+                "for debugging and verification.",
+    annotations=ToolAnnotations(
+        title="Get Workspace Info",
+        readOnlyHint=True,
+    ),
 )
 async def tool_get_workspace_detection_info(
     ctx: Context,
