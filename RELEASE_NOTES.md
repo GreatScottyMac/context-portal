@@ -5,7 +5,7 @@
 ## v0.3.13 (2025-12-31)
 
 ### Features
-- **Tool Annotations:** Added MCP tool annotations (`readOnlyHint`, `destructiveHint`, `title`) to all tools to help LLMs understand tool behavior and improve safety. (Credit: @GreatScottyMac)
+- **Tool Annotations:** Added MCP tool annotations (`readOnlyHint`, `destructiveHint`, `title`) to all tools to help LLMs understand tool behavior and improve safety. (Credit: @triepod-ai)
 
 ### Installation
 ```bash
