@@ -331,7 +331,7 @@ async def tool_update_active_context(
     description="Logs an architectural or implementation decision.",
     annotations=ToolAnnotations(
         title="Log Decision",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_log_decision(
@@ -509,7 +509,7 @@ async def tool_search_decisions_fts(
     description="Logs a progress entry or task status.",
     annotations=ToolAnnotations(
         title="Log Progress",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_log_progress(
@@ -648,7 +648,7 @@ async def tool_get_progress(
     description="Updates an existing progress entry.",
     annotations=ToolAnnotations(
         title="Update Progress",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_update_progress(
@@ -769,7 +769,7 @@ async def tool_delete_progress_by_id(
     description="Logs or updates a system/coding pattern.",
     annotations=ToolAnnotations(
         title="Log System Pattern",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_log_system_pattern(
@@ -893,7 +893,7 @@ async def tool_get_system_patterns(
                 "Value is JSON-serializable.",
     annotations=ToolAnnotations(
         title="Log Custom Data",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_log_custom_data(
@@ -1109,7 +1109,7 @@ async def tool_search_project_glossary_fts(
     description="Exports ConPort data to markdown files.",
     annotations=ToolAnnotations(
         title="Export to Markdown",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_export_conport_to_markdown(
@@ -1209,7 +1209,7 @@ async def tool_import_markdown_to_conport(
                 "explicitly building out the project knowledge graph.",
     annotations=ToolAnnotations(
         title="Link Items",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_link_conport_items(
@@ -1400,7 +1400,7 @@ async def tool_search_custom_data_value_fts(
                 "(e.g., decisions, progress entries) in a single call.",
     annotations=ToolAnnotations(
         title="Batch Log Items",
-        destructiveHint=True,
+        destructiveHint=False,
     ),
 )
 async def tool_batch_log_items(
