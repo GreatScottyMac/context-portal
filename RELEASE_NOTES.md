@@ -2,6 +2,23 @@
 
 <br>
 
+## v0.3.13 (2025-12-31)
+
+### Features
+- **Tool Annotations:** Added MCP tool annotations (`readOnlyHint`, `destructiveHint`, `title`) to all tools to help LLMs understand tool behavior and improve safety. (Credit: @GreatScottyMac)
+
+### Installation
+```bash
+uvx --from git+https://github.com/GreatScottyMac/context-portal.git@v0.3.13 conport-mcp --mode stdio
+```
+
+Or via pip:
+```bash
+pip install context-portal-mcp
+```
+
+<br>
+
 ## v0.3.12 (2025-12-19)
 
 ### Security
