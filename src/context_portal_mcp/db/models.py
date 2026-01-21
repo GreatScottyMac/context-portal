@@ -111,8 +111,8 @@ class UpdateContextArgs(BaseArgs):
     """Arguments for updating product or active context.
     Provide either 'content' for a full update or 'patch_content' for a partial update.
     """
-    content: Optional[Dict[str, Any]] = Field(None, description="The full new context content as a dictionary. Overwrites existing.")
-    patch_content: Optional[Dict[str, Any]] = Field(None, description="A dictionary of changes to apply to the existing context (add/update keys).")
+    content: Optional[Json[Dict[str, Any]]] = Field(None, description="The full new context content as a JSON string. Overwrites existing.")
+    patch_content: Optional[Json[Dict[str, Any]]] = Field(None, description="A JSON string of changes to apply to the existing context (add/update keys).")
 
     @model_validator(mode='before')
     @classmethod
@@ -290,7 +290,7 @@ class LogCustomDataArgs(BaseArgs):
     """Arguments for logging custom data."""
     category: str = Field(..., min_length=1, description="Category for the custom data")
     key: str = Field(..., min_length=1, description="Key for the custom data (unique within category)")
-    value: Any = Field(..., description="The custom data value (JSON serializable)")
+    value: Json[Any] = Field(..., description="The custom data value (JSON string)")
 
 class GetCustomDataArgs(BaseArgs):
     """Arguments for retrieving custom data."""
@@ -381,7 +381,7 @@ class GetLinkedItemsArgs(IntCoercionMixin, BaseArgs):
 class BatchLogItemsArgs(BaseArgs):
     """Arguments for batch logging multiple items of the same type."""
     item_type: str = Field(..., description="Type of items to log (e.g., 'decision', 'progress_entry', 'system_pattern', 'custom_data')")
-    items: List[Dict[str, Any]] = Field(..., description="A list of dictionaries, each representing the arguments for a single item log.")
+    items: Json[List[Dict[str, Any]]] = Field(..., description="A JSON string list of dictionaries, each representing the arguments for a single item log.")
 
 # --- Context History Tool Args ---
 
