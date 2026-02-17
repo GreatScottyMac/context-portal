@@ -182,12 +182,12 @@ async def tool_update_product_context(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
-    content: Annotated[Optional[Dict[str, Any]], Field(
+    content: Optional[Annotated[Dict[str, Any], Field(
         description="The full new context content as a dictionary. Overwrites existing."
-    )] = None,
-    patch_content: Annotated[Optional[Dict[str, Any]], Field(
+    )]] = None,
+    patch_content: Optional[Annotated[Dict[str, Any], Field(
         description="A dictionary of changes to apply to the existing context (add/update keys)."
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Updates the product context for the specified workspace.
@@ -281,12 +281,12 @@ async def tool_update_active_context(
     workspace_id: Annotated[str, Field(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
-    content: Annotated[Optional[Dict[str, Any]], Field(
+    content: Optional[Annotated[Dict[str, Any], Field(
         description="The full new context content as a dictionary. Overwrites existing."
-    )] = None,
-    patch_content: Annotated[Optional[Dict[str, Any]], Field(
+    )]] = None,
+    patch_content: Optional[Annotated[Dict[str, Any], Field(
         description="A dictionary of changes to apply to the existing context (add/update keys)."
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Updates the active context for the specified workspace.
@@ -341,15 +341,15 @@ async def tool_log_decision(
     summary: Annotated[str, Field(
         min_length=1, description="A concise summary of the decision"
     )],
-    rationale: Annotated[Optional[str], Field(
+    rationale: Optional[Annotated[str, Field(
         description="The reasoning behind the decision"
-    )] = None,
-    implementation_details: Annotated[Optional[str], Field(
+    )]] = None,
+    implementation_details: Optional[Annotated[str, Field(
         description="Details about how the decision will be/was implemented"
-    )] = None,
-    tags: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    tags: Optional[Annotated[List[str], Field(
         description="Optional tags for categorization"
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Logs a new decision for the specified workspace.
@@ -398,15 +398,15 @@ async def tool_get_decisions(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    limit: Optional[Annotated[Union[int, str], Field(
         description="Maximum number of decisions to return (most recent first)"
-    )] = None,
-    tags_filter_include_all: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    tags_filter_include_all: Optional[Annotated[List[str], Field(
         description="Filter: items must include ALL of these tags."
-    )] = None,
-    tags_filter_include_any: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    tags_filter_include_any: Optional[Annotated[List[str], Field(
         description="Filter: items must include AT LEAST ONE of these tags."
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieves decisions for the specified workspace.
@@ -467,9 +467,9 @@ async def tool_search_decisions_fts(
         min_length=1, description="The term to search for in decisions."
     )],
     ctx: Context,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    limit: Optional[Annotated[Union[int, str], Field(
         default=10, ge=1, description="Maximum number of search results to return."
-    )] = 10
+    )]] = 10
 ) -> List[Dict[str, Any]]:
     """
     Performs a full-text search on decisions.
@@ -523,17 +523,17 @@ async def tool_log_progress(
         min_length=1, description="Description of the progress or task"
     )],
     ctx: Context,
-    parent_id: Annotated[Optional[Union[int, str]], Field(
+    parent_id: Optional[Annotated[Union[int, str], Field(
         description="ID of the parent task, if this is a subtask"
-    )] = None,
-    linked_item_type: Annotated[Optional[str], Field(
+    )]] = None,
+    linked_item_type: Optional[Annotated[str, Field(
         description="Optional: Type of the ConPort item this progress entry is linked to "
                     "(e.g., 'decision', 'system_pattern')"
-    )] = None,
-    linked_item_id: Annotated[Optional[str], Field(
+    )]] = None,
+    linked_item_id: Optional[Annotated[str, Field(
         description="Optional: ID/key of the ConPort item this progress entry is linked to "
                     "(requires linked_item_type)"
-    )] = None,
+    )]] = None,
     link_relationship_type: Annotated[str, Field(
         description="Relationship type for the automatic link, defaults to 'relates_to_progress'"
     )] = "relates_to_progress"
@@ -598,15 +598,15 @@ async def tool_get_progress(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    status_filter: Annotated[Optional[str], Field(
+    status_filter: Optional[Annotated[str, Field(
         description="Filter entries by status"
-    )] = None,
-    parent_id_filter: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    parent_id_filter: Optional[Annotated[Union[int, str], Field(
         description="Filter entries by parent task ID"
-    )] = None,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    limit: Optional[Annotated[Union[int, str], Field(
         description="Maximum number of entries to return (most recent first)"
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieves progress entries for the specified workspace.
@@ -659,15 +659,15 @@ async def tool_update_progress(
         description="The ID of the progress entry to update."
     )],
     ctx: Context,
-    status: Annotated[Optional[str], Field(
+    status: Optional[Annotated[str, Field(
         description="New status (e.g., 'TODO', 'IN_PROGRESS', 'DONE')"
-    )] = None,
-    description: Annotated[Optional[str], Field(
+    )]] = None,
+    description: Optional[Annotated[str, Field(
         min_length=1, description="New description of the progress or task"
-    )] = None,
-    parent_id: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    parent_id: Optional[Annotated[Union[int, str], Field(
         description="New ID of the parent task, if changing"
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Updates an existing progress entry.
@@ -780,12 +780,12 @@ async def tool_log_system_pattern(
         min_length=1, description="Unique name for the system pattern"
     )],
     ctx: Context,
-    description: Annotated[Optional[str], Field(
+    description: Optional[Annotated[str, Field(
         description="Description of the pattern"
-    )] = None,
-    tags: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    tags: Optional[Annotated[List[str], Field(
         description="Optional tags for categorization"
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Logs a system pattern for the specified workspace.
@@ -834,15 +834,15 @@ async def tool_get_system_patterns(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    limit: Optional[Annotated[Union[int, str], Field(
         description="Maximum number of patterns to return"
-    )] = None,
-    tags_filter_include_all: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    tags_filter_include_all: Optional[Annotated[List[str], Field(
         description="Filter: items must include ALL of these tags."
-    )] = None,
-    tags_filter_include_any: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    tags_filter_include_any: Optional[Annotated[List[str], Field(
         description="Filter: items must include AT LEAST ONE of these tags."
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieves system patterns for the specified workspace.
@@ -959,12 +959,12 @@ async def tool_get_custom_data(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    category: Annotated[Optional[str], Field(
+    category: Optional[Annotated[str, Field(
         description="Filter by category"
-    )] = None,
-    key: Annotated[Optional[str], Field(
+    )]] = None,
+    key: Optional[Annotated[str, Field(
         description="Filter by key (requires category)"
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieves custom data for the specified workspace.
@@ -1067,9 +1067,9 @@ async def tool_search_project_glossary_fts(
         min_length=1, description="The term to search for in the glossary."
     )],
     ctx: Context,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    limit: Optional[Annotated[Union[int, str], Field(
         default=10, description="Maximum number of search results to return."
-    )] = 10
+    )]] = 10
 ) -> List[Dict[str, Any]]:
     """
     Searches the project glossary.
@@ -1117,10 +1117,10 @@ async def tool_export_conport_to_markdown(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    output_path: Annotated[Optional[str], Field(
+    output_path: Optional[Annotated[str, Field(
         description="Optional output directory path relative to workspace_id. "
                     "Defaults to './conport_export/' if not provided."
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Exports ConPort data to markdown files.
@@ -1166,11 +1166,11 @@ async def tool_import_markdown_to_conport(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    input_path: Annotated[Optional[str], Field(
+    input_path: Optional[Annotated[str, Field(
         description="Optional input directory path relative to workspace_id "
                     "containing markdown files. "
                     "Defaults to './conport_export/' if not provided."
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Imports data from markdown files into ConPort.
@@ -1222,9 +1222,9 @@ async def tool_link_conport_items(
     target_item_id: Annotated[str, Field(description="ID or key of the target item")],
     relationship_type: Annotated[str, Field(description="Nature of the link")],
     ctx: Context,
-    description: Annotated[Optional[str], Field(
+    description: Optional[Annotated[str, Field(
         description="Optional description for the link"
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     Creates a link between two ConPort items.
@@ -1286,15 +1286,15 @@ async def tool_get_linked_items(
         description="ID or key of the item to find links for"
     )],
     ctx: Context,
-    relationship_type_filter: Annotated[Optional[str], Field(
+    relationship_type_filter: Optional[Annotated[str, Field(
         description="Optional: Filter by relationship type"
-    )] = None,
-    linked_item_type_filter: Annotated[Optional[str], Field(
+    )]] = None,
+    linked_item_type_filter: Optional[Annotated[str, Field(
         description="Optional: Filter by the type of the linked items"
-    )] = None,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    limit: Optional[Annotated[Union[int, str], Field(
         description="Maximum number of links to return"
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieves linked items for a specific item.
@@ -1352,12 +1352,12 @@ async def tool_search_custom_data_value_fts(
         description="The term to search for in custom data (category, key, or value)."
     )],
     ctx: Context,
-    category_filter: Annotated[Optional[str], Field(
+    category_filter: Optional[Annotated[str, Field(
         description="Optional: Filter results to this category after FTS."
-    )] = None,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    limit: Optional[Annotated[Union[int, str], Field(
         default=10, ge=1, description="Maximum number of search results to return."
-    )] = 10
+    )]] = 10
 ) -> List[Dict[str, Any]]:
     """
     Performs a full-text search on custom data values.
@@ -1467,18 +1467,18 @@ async def tool_get_item_history(
         description="Type of the item: 'product_context' or 'active_context'"
     )],
     ctx: Context,
-    limit: Annotated[Optional[Union[int, str]], Field(
+    limit: Optional[Annotated[Union[int, str], Field(
         description="Maximum number of history entries to return (most recent first)"
-    )] = None,
-    before_timestamp: Annotated[Optional[datetime], Field(
+    )]] = None,
+    before_timestamp: Optional[Annotated[datetime, Field(
         description="Return entries before this timestamp"
-    )] = None,
-    after_timestamp: Annotated[Optional[datetime], Field(
+    )]] = None,
+    after_timestamp: Optional[Annotated[datetime, Field(
         description="Return entries after this timestamp"
-    )] = None,
-    version: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    version: Optional[Annotated[Union[int, str], Field(
         description="Return a specific version"
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieves the history of a context item.
@@ -1668,19 +1668,19 @@ async def tool_get_recent_activity_summary(
         description="Identifier for the workspace (e.g., absolute path)"
     )],
     ctx: Context,
-    hours_ago: Annotated[Optional[Union[int, str]], Field(
+    hours_ago: Optional[Annotated[Union[int, str], Field(
         description="Look back this many hours for recent activity. "
                     "Mutually exclusive with 'since_timestamp'."
-    )] = None,
-    since_timestamp: Annotated[Optional[datetime], Field(
+    )]] = None,
+    since_timestamp: Optional[Annotated[datetime, Field(
         description="Look back for activity since this specific timestamp. "
                     "Mutually exclusive with 'hours_ago'."
-    )] = None,
-    limit_per_type: Annotated[Optional[Union[int, str]], Field(
+    )]] = None,
+    limit_per_type: Optional[Annotated[Union[int, str], Field(
         default=5,
         description="Maximum number of recent items to show per activity type "
                     "(e.g., 5 most recent decisions)."
-    )] = 5
+    )]] = 5
 ) -> Dict[str, Any]:
     """
     Retrieves a summary of recent activity.
@@ -1746,22 +1746,22 @@ async def tool_semantic_search_conport(
     top_k: Annotated[Union[int, str], Field(
         default=5, le=25, description="Number of top results to return."
     )] = 5,
-    filter_item_types: Annotated[Optional[List[str]], Field(
+    filter_item_types: Optional[Annotated[List[str], Field(
         description="Optional list of item types to filter by "
                     "(e.g., ['decision', 'custom_data']). "
                     "Valid types: 'decision', 'system_pattern', 'custom_data', 'progress_entry'."
-    )] = None,
-    filter_tags_include_any: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    filter_tags_include_any: Optional[Annotated[List[str], Field(
         description="Optional list of tags; results will include items matching any of these tags."
-    )] = None,
-    filter_tags_include_all: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    filter_tags_include_all: Optional[Annotated[List[str], Field(
         description="Optional list of tags; "
                     "results will include only items matching all of these tags."
-    )] = None,
-    filter_custom_data_categories: Annotated[Optional[List[str]], Field(
+    )]] = None,
+    filter_custom_data_categories: Optional[Annotated[List[str], Field(
         description="Optional list of categories to filter by "
                     "if 'custom_data' is in filter_item_types."
-    )] = None
+    )]] = None
 ) -> List[Dict[str, Any]]:
     """
     Performs a semantic search across ConPort data.
@@ -1824,9 +1824,9 @@ async def tool_semantic_search_conport(
 )
 async def tool_get_workspace_detection_info(
     ctx: Context,
-    start_path: Annotated[Optional[str], Field(
+    start_path: Optional[Annotated[str, Field(
         description="Starting directory for detection analysis (default: current directory)"
-    )] = None
+    )]] = None
 ) -> Dict[str, Any]:
     """
     MCP tool for getting workspace detection information.
